@@ -1,4 +1,10 @@
-export const flightRouter = router({                                                                           
+import { COOKIE_NAME } from "@shared/const";                                                                   
+  import { getSessionCookieOptions } from "./_core/cookies";                                                     
+  import { systemRouter } from "./_core/systemRouter";                                                           
+  import { publicProcedure, router } from "./_core/trpc";                                                        
+  import { z } from "zod";                                                                                       
+                                                                                                                 
+  export const flightRouter = router({                                                                           
     search: publicProcedure                                                                                      
       .input(z.object({                                                                                          
         from: z.string(),                                                                                        
@@ -13,7 +19,7 @@ export const flightRouter = router({
       }))                                                                                                        
       .query(async ({ input }) => {                                                                              
         try {                                                                                                    
-          const apiKey = "***";                                                                                  
+          const apiKey = "YOUR_FLIGHTAPI_KEY_HERE";                                                                                  
           const url =                                                                                            
 `https://api.flightapi.io/onewaytrip/${apiKey}/${input.from}/${input.to}/${input.departDate}/${input.adults}/${in
 put.children}/${input.infants}/${input.cabin}/${input.currency}`;                                                
@@ -35,4 +41,57 @@ put.children}/${input.infants}/${input.cabin}/${input.currency}`;
           return [];                                                                                             
         }                                                                                                        
       }),                                                                                                        
-  });
+  });                                                                                                            
+                                                                                                                 
+  export const hotelRouter = router({                                                                            
+    search: publicProcedure                                                                                      
+      .input(z.object({                                                                                          
+        hotelName: z.string(),                                                                                   
+        checkInDate: z.string().optional(),                                                                      
+        checkOutDate: z.string().optional(),                                                                     
+      }))                                                                                                        
+      .query(async ({ input }) => {                                                                              
+        try {                                                                                                    
+          const response = await                                                                                 
+fetch(`https://api.stayapi.com/v1/meta/search?hotel_name=${encodeURIComponent(input.hotelName)}`, {              
+            headers: {                                                                                           
+              'x-api-key': 'YOUR_STAYAPI_KEY_HERE',                                                                                
+            },                                                                                                   
+          });                                                                                                    
+          const data = await response.json();                                                                    
+          if (!data.data) return [];                                                                             
+          return [{                                                                                              
+            name: data.data.hotel_name,                                                                          
+            area: data.data.location || "Location",                                                              
+            rating: "4.8",                                                                                       
+            price: "$285",                                                                                       
+            nights: "per night",                                                                                 
+            image: "/images/cabin.webp",                                                                         
+            tag: "Available",                                                                                    
+          }];                                                                                                    
+        } catch (error) {                                                                                        
+          console.error("Hotel search error:", error);                                                           
+          return [];                                                                                             
+        }                                                                                                        
+      }),                                                                                                        
+  });                                                                                                            
+                                                                                                                 
+  export const appRouter = router({                                                                              
+    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with 
+'/api/' so that the gateway can route correctly                                                                  
+    system: systemRouter,                                                                                        
+    flights: flightRouter,                                                                                       
+    hotels: hotelRouter,                                                                                         
+    auth: router({                                                                                               
+      me: publicProcedure.query(opts => opts.ctx.user),                                                          
+      logout: publicProcedure.mutation(({ ctx }) => {                                                            
+        const cookieOptions = getSessionCookieOptions(ctx.req);                                                  
+        ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });                                      
+        return {                                                                                                 
+          success: true,                                                                                         
+        } as const;                                                                                              
+      }),                                                                                                        
+    }),                                                                                                          
+  });                                                                                                            
+                                                                                                                 
+  export type AppRouter = typeof appRouter;
