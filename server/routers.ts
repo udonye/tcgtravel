@@ -21,8 +21,7 @@ import { COOKIE_NAME } from "@shared/const";
         try {                                                                                                    
           const apiKey = process.env.FLIGHTAPI_KEY || "";                                                                                  
           const url =                                                                                            
-`https://api.flightapi.io/onewaytrip/${apiKey}/${input.from}/${input.to}/${input.departDate}/${input.adults}/${in
-put.children}/${input.infants}/${input.cabin}/${input.currency}`;                                                
+`https://api.flightapi.io/onewaytrip/${apiKey}/${input.from}/${input.to}/${input.departDate}/${input.adults}/${input.children}/${input.infants}/${input.cabin}/${input.currency}`;                                                
           const response = await fetch(url);                                                                     
           const data = await response.json();                                                                    
           if (!data.best) return [];                                                                             
