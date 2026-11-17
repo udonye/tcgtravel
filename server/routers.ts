@@ -1,11 +1,4 @@
-import { COOKIE_NAME } from "@shared/const";                                                                   
-  import { getSessionCookieOptions } from "./_core/cookies";                                                     
-  import { systemRouter } from "./_core/systemRouter";                                                           
-  import { publicProcedure, router } from "./_core/trpc";                                                        
-  import { z } from "zod";                                                                                       
-                                                                                                                 
-  // ADD THIS FLIGHT ROUTER                                                                                      
-  export const flightRouter = router({                                                                           
+export const flightRouter = router({                                                                           
     search: publicProcedure                                                                                      
       .input(z.object({                                                                                          
         from: z.string(),                                                                                        
@@ -13,48 +6,39 @@ import { COOKIE_NAME } from "@shared/const";
         departDate: z.string(),                                                                                  
         returnDate: z.string().optional(),                                                                       
         adults: z.number().default(1),                                                                           
+        children: z.number().default(0),                                                                         
+        infants: z.number().default(0),                                                                          
+        cabin: z.string().default("Economy"),                                                                    
+        currency: z.string().default("USD"),                                                                     
       }))                                                                                                        
       .query(async ({ input }) => {                                                                              
         try {                                                                                                    
-          const response = await fetch(                                                                          
-            `https://api.apilayer.com/amadeus/flightSearch?apikey=cb00dc8a7d733a7668b2ab2e2388cff1`,             
-            {                                                                                                    
-              method: "POST",                                                                                    
-              headers: { "Content-Type": "application/json" },                                                   
-              body: JSON.stringify({                                                                             
-                originCode: input.from,                                                                          
-                destinationCode: input.to,                                                                       
-                departureDate: input.departDate,                                                                 
-                returnDate: input.returnDate,                                                                    
-                adults: input.adults,                                                                            
-              }),                                                                                                
-            }                                                                                                    
-          );                                                                                                     
+          const apiKey = "6afbb3046b6b5e2f0dfe3978";                                                             
                                                                                                                  
+          // Build FlightAPI.io URL                                                                              
+          const url =                                                                                            
+`https://api.flightapi.io/onewaytrip/${apiKey}/${input.from}/${input.to}/${input.departDate}/${input.adults}/${in
+put.children}/${input.infants}/${input.cabin}/${input.currency}`;                                                
+                                                                                                                 
+          const response = await fetch(url);                                                                     
           const data = await response.json();                                                                    
-          return data.data || [];                                                                                
+                                                                                                                 
+          if (!data.best) return [];                                                                             
+                                                                                                                 
+          // Transform FlightAPI format to our format                                                            
+          return data.best.map((flight: any) => ({                                                               
+            airline: flight.airline || "Unknown Airline",                                                        
+            mark: flight.airline?.substring(0, 2).toUpperCase() || "AA",                                         
+            route: `${input.from} → ${input.to}`,                                                                
+            time: flight.departure_time || "N/A",                                                                
+            duration: flight.duration || "N/A",                                                                  
+            price: `$${flight.price}`,                                                                           
+            badge: "Best price",                                                                                 
+            color: "blue",                                                                                       
+          })).slice(0, 5);                                                                                       
         } catch (error) {                                                                                        
           console.error("Flight search error:", error);                                                          
           return [];                                                                                             
         }                                                                                                        
       }),                                                                                                        
-  });                                                                                                            
-                                                                                                                 
-  export const appRouter = router({                                                                              
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with 
-'/api/' so that the gateway can route correctly                                                                  
-    system: systemRouter,                                                                                        
-    flights: flightRouter,                                                                                       
-    auth: router({                                                                                               
-      me: publicProcedure.query(opts => opts.ctx.user),                                                          
-      logout: publicProcedure.mutation(({ ctx }) => {                                                            
-        const cookieOptions = getSessionCookieOptions(ctx.req);                                                  
-        ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });                                      
-        return {                                                                                                 
-          success: true,                                                                                         
-        } as const;                                                                                              
-      }),                                                                                                        
-    }),                                                                                                          
-  });                                                                                                            
-                                                                                                                 
-  export type AppRouter = typeof appRouter;
+  });
