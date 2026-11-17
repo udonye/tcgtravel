@@ -13,19 +13,13 @@ export const flightRouter = router({
       }))                                                                                                        
       .query(async ({ input }) => {                                                                              
         try {                                                                                                    
-          const apiKey = "6afbb3046b6b5e2f0dfe3978";                                                             
-                                                                                                                 
-          // Build FlightAPI.io URL                                                                              
+          const apiKey = "***";                                                                                  
           const url =                                                                                            
 `https://api.flightapi.io/onewaytrip/${apiKey}/${input.from}/${input.to}/${input.departDate}/${input.adults}/${in
 put.children}/${input.infants}/${input.cabin}/${input.currency}`;                                                
-                                                                                                                 
           const response = await fetch(url);                                                                     
           const data = await response.json();                                                                    
-                                                                                                                 
           if (!data.best) return [];                                                                             
-                                                                                                                 
-          // Transform FlightAPI format to our format                                                            
           return data.best.map((flight: any) => ({                                                               
             airline: flight.airline || "Unknown Airline",                                                        
             mark: flight.airline?.substring(0, 2).toUpperCase() || "AA",                                         
