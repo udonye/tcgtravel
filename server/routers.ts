@@ -19,7 +19,7 @@ import { COOKIE_NAME } from "@shared/const";
       }))                                                                                                        
       .query(async ({ input }) => {                                                                              
         try {                                                                                                    
-          const apiKey = "YOUR_FLIGHTAPI_KEY_HERE";                                                                                  
+          const apiKey = process.env.FLIGHTAPI_KEY || "";                                                                                  
           const url =                                                                                            
 `https://api.flightapi.io/onewaytrip/${apiKey}/${input.from}/${input.to}/${input.departDate}/${input.adults}/${in
 put.children}/${input.infants}/${input.cabin}/${input.currency}`;                                                
@@ -55,7 +55,7 @@ put.children}/${input.infants}/${input.cabin}/${input.currency}`;
           const response = await                                                                                 
 fetch(`https://api.stayapi.com/v1/meta/search?hotel_name=${encodeURIComponent(input.hotelName)}`, {              
             headers: {                                                                                           
-              'x-api-key': 'YOUR_STAYAPI_KEY_HERE',                                                                                
+              'x-api-key': process.env.STAYAPI_KEY || "",                                                                                
             },                                                                                                   
           });                                                                                                    
           const data = await response.json();                                                                    
