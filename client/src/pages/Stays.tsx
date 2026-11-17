@@ -1,5 +1,5 @@
 import { useState } from 'react';                                                                              
-  import { trpc } from '../utils/trpc';                                                                          
+  import { trpc } from '@/utils/trpc';                                                                          
                                                                                                                  
   export function Stays() {                                                                                      
     const [hotelName, setHotelName] = useState('Four Seasons');                                                  
